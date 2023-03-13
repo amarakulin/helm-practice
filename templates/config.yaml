@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.name }}-config
+  namespace: {{ .Values.namespace.name  }}
+  {{- template "ik-helm.labels.metadata" . }}
+data:
+  DB_URL: {{ .Values.name }}-db-service
+  DB_NAME: db_{{ .Values.name }}
+  POSTGRES_DB: db_{{ .Values.name }}
+  {{- range $key, $val := .Values.db.postgresql.envs }}
+  {{ $key }}: {{ $val | quote }}
+  {{- end }}
+
+  {{- if .Values.web_app.envs}}
+  {{- range $key, $val := .Values.web_app.envs }}
+  {{ $key }}: {{ $val | quote }}
+  {{- end }}
+  {{- end }}

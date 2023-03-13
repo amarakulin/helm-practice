@@ -1,0 +1,11 @@
+replicaCount: 2
+namespace:
+  name: ik-helm
+  autocreate: false
+
+db:
+  image: postgres:10
+  postgresql:
+    envs:
+      DB_PORT: 5432
+      PGDATA: /var/lib/postgresql/data/pgdata

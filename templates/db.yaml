@@ -1,0 +1,72 @@
+{{- if not .Values.db }}
+{{- fail "db has to be configured" }}
+{{- end }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.name }}-db-service
+  namespace: {{ .Values.namespace.name  }}
+  {{- template "ik-helm.labels.metadata" . }}
+spec:
+  selector:
+    {{- include "ik-helm.selectorLables" . | indent 4 }}-{{ .Values.name }}
+  ports:
+    - name: tcp-db
+      protocol: TCP
+      port: {{ .Values.db.postgresql.envs.DB_PORT }}
+      targetPort: port-db-pod
+
+---
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ .Values.name }}-db-stateful
+  namespace: {{ .Values.namespace.name  }}
+  {{- template "ik-helm.labels.metadata" . }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "ik-helm.selectorLables" . | indent 6 }}-{{ .Values.name }}
+  serviceName: {{ .Values.name }}-db-stateful
+  volumeClaimTemplates:
+    - metadata:
+        name: postgres-volume
+        namespace: {{ .Values.namespace.name  }}
+      spec:
+        storageClassName: {{ .Values.name }}-storage
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 500Mi
+  template:
+    metadata:
+      labels:
+        {{- include "ik-helm.selectorLables" . | indent 8 }}-{{ .Values.name }}
+    spec:
+      containers:
+        - name: {{ .Values.name }}-db
+          image: {{ .Values.db.image }}
+          livenessProbe:
+            exec:
+              command: [ "pg_isready", "-U", "$DB_USERNAME", "-d", "$DB_NAME" ]
+            initialDelaySeconds: {{ .Values.db.probes.liveness.initialSeconds }}
+            periodSeconds: {{ .Values.db.probes.liveness.periodSeconds }}
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", "$DB_USERNAME", "-d", "$DB_NAME"]
+            initialDelaySeconds: {{ .Values.db.probes.liveness.initialSeconds }}
+            periodSeconds: {{ .Values.db.probes.liveness.periodSeconds }}
+          volumeMounts:
+            - name: postgres-volume
+              mountPath: {{ .Values.db.postgresql.envs.PGDATA }}
+          envFrom:
+            - configMapRef:
+                name: {{ .Values.name }}-config
+            - secretRef:
+                name: {{ .Values.name }}-secret
+          ports:
+            - name: port-db-pod
+              containerPort: {{ .Values.db.postgresql.envs.DB_PORT }}
+

@@ -1,0 +1,36 @@
+name: post
+namespace:
+  autocreate: true
+
+
+web_app:
+  image: # an image from docker-hub
+  probes:
+    liveness:
+      periodSeconds: 20
+      initialSeconds: 15
+    readiness:
+      periodSeconds: 10
+      initialSeconds: 10
+  port:
+    internal: 8081
+    node: 30036
+
+db:
+  probes:
+    liveness:
+      periodSeconds: 15
+      initialSeconds: 1
+    readiness:
+      periodSeconds: 20
+      initialSeconds: 1
+
+secrets:
+  db:
+    password: "cGFzc3dvcmRfcG9zdA=="
+    username: "dXNlcm5hbWVfcG9zdA=="
+
+
+
+
+

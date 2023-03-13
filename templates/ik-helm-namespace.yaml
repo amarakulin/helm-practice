@@ -1,0 +1,8 @@
+{{- if .Values.namespace.autocreate }}
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ .Values.namespace.name }}
+  {{- template "ik-helm.labels.metadata" . }}
+---
+{{- end }}

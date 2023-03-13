@@ -1,0 +1,63 @@
+{{- if not .Values.web_app }}
+{{- fail "web-app has to be configured" }}
+{{- end }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.name }}-app-service
+  namespace: {{ .Values.namespace.name  }}
+  {{- template "ik-helm.labels.metadata" . }}
+spec:
+  selector:
+    {{- include "ik-helm.selectorLables" . | indent 4 }}-{{ .Values.name }}
+  type: NodePort
+  ports:
+    - name: http
+      nodePort: {{ .Values.web_app.port.node }}
+      protocol: TCP
+      port: {{ .Values.web_app.port.internal }}
+      targetPort: {{ .Values.name }}
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.name }}-app-deployment
+  namespace: {{ .Values.namespace.name  }}
+  {{- template "ik-helm.labels.metadata" . }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  strategy:
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      {{- include "ik-helm.selectorLables" . | indent 6 }}-{{ .Values.name }}
+  template:
+    metadata:
+      labels:
+        {{- include "ik-helm.selectorLables" . | indent 8 }}-{{ .Values.name }}
+    spec:
+      containers:
+        - name: {{ .Values.name }}-app
+          image: {{ .Values.web_app.image }}
+          livenessProbe:
+            httpGet:
+              port: {{ .Values.name }}
+              path: /actuator/health/liveness
+            initialDelaySeconds: {{ .Values.web_app.probes.liveness.initialSeconds }}
+            periodSeconds: {{ .Values.web_app.probes.liveness.periodSeconds }}
+          readinessProbe:
+            httpGet:
+              port: {{ .Values.name }}
+              path: /actuator/health/readiness
+            initialDelaySeconds: {{ .Values.web_app.probes.readiness.initialSeconds }}
+            periodSeconds: {{ .Values.web_app.probes.readiness.periodSeconds }}
+          envFrom:
+            - configMapRef:
+                name: {{ .Values.name }}-config
+            - secretRef:
+                 name: {{ .Values.name }}-secret
+          ports:
+            - name: {{ .Values.name }}
+              containerPort: {{ .Values.web_app.port.internal }}

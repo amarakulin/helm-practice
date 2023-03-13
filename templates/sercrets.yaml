@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ .Values.name }}-secret
+  namespace: {{ .Values.namespace.name  }}
+  {{- template "ik-helm.labels.metadata" . }}
+data:
+  DB_PASSWORD: {{ .Values.secrets.db.password }}
+  DB_USERNAME: {{ .Values.secrets.db.username }}
+  POSTGRES_PASSWORD: {{ .Values.secrets.db.password }}
+  POSTGRES_USER: {{ .Values.secrets.db.username }}

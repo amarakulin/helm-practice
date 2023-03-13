@@ -1,0 +1,35 @@
+name: user
+
+web_app:
+  image: # an image from docker-hub
+  probes:
+    liveness:
+      periodSeconds: 20
+      initialSeconds: 15
+    readiness:
+      periodSeconds: 10
+      initialSeconds: 10
+  port:
+    internal: 8080
+    node: 30030
+  envs:
+    POST_URL: "post-app-service:8081"
+
+db:
+  probes:
+    liveness:
+      periodSeconds: 30
+      initialSeconds: 1
+    readiness:
+      periodSeconds: 30
+      initialSeconds: 1
+
+secrets:
+  db:
+    password: "cGFzc3dvcmRfdXNlcg=="
+    username: "dXNlcm5hbWVfdXNlcg=="
+
+
+
+
+
